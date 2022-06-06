@@ -53,21 +53,28 @@ void UACBuildSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	// ...
 }
 
-void UACBuildSystem::TickGhost() { 
-	FVector SpawnLoc = this->HitLoc;
+void UACBuildSystem::TickGhost() {
+	FVector SpawnLoc;
+	if (bDetermineTheBuildingLocation)
+	{
+		SpawnLoc = BuildingSpotting;
+	}
+	else
+	{
+		SpawnLoc = 	this->HitLoc;
+	}
 	FRotator SpawnRot = GetGhostRotator();
 
-	if (bClockwiseRotate)
-	{
-		TotalRot += (LittleRotate * UGameplayStatics::GetWorldDeltaSeconds(this));
-		SpawnRot = GetGhostRotator();
-	}
-	if (bCounterclockwiseRotate)
-	{
-		TotalRot -=(LittleRotate * UGameplayStatics::GetWorldDeltaSeconds(this));
-		SpawnRot = GetGhostRotator();
-	}
-	
+	// if (bClockwiseRotate)
+	// {
+	// 	TotalRot += (LittleRotate * UGameplayStatics::GetWorldDeltaSeconds(this));
+	// 	SpawnRot = GetGhostRotator();
+	// }
+	// if (bCounterclockwiseRotate)
+	// {
+	// 	TotalRot -=(LittleRotate * UGameplayStatics::GetWorldDeltaSeconds(this));
+	// 	SpawnRot = GetGhostRotator();
+	// }
 	if(GhostBuilding)
 	{
 		GhostBuilding->SetActorLocationAndRotation(SpawnLoc,SpawnRot);
@@ -78,7 +85,12 @@ void UACBuildSystem::BuildThing() {
 
 	UE_LOG(LogClass, Log, TEXT("build thing"));
 	if (IsEnableThisSystem() == false) return;
-
+	
+	if (bDefiniteConstruction == false)
+	{
+		bDefiniteConstruction = true;
+		return;
+	}
 	FBuildableInfo thing_info;
 	FBuildableInfo* infoptr = nullptr;
 	if (GetCurrentItemInfo(thing_info, &infoptr)) {
@@ -95,7 +107,7 @@ void UACBuildSystem::BuildThing() {
 			if (GhostBuilding)
 			{
 				GhostBuilding->UpdateBuildState(true);
-				GhostBuilding->SetActorLocationAndRotation(this->HitLoc,GetGhostRotator());
+				GhostBuilding->SetActorLocationAndRotation(BuildingSpotting,GetGhostRotator());
 				GhostBuilding = nullptr;
 			}
 			infoptr->count--;
@@ -106,16 +118,40 @@ void UACBuildSystem::BuildThing() {
 			{
 				FActorSpawnParameters ASP;
 				ASP.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-				GhostBuilding = GetWorld()->SpawnActor<AGamePlayNodeBase>(thing_info.actor_class,this->HitLoc,GetGhostRotator(),ASP);
+				GhostBuilding = GetWorld()->SpawnActor<AGamePlayNodeBase>(thing_info.actor_class,BuildingSpotting,GetGhostRotator(),ASP);
 				if(GhostBuilding)
 				{
 					GhostBuilding->UpdateBuildState(false);
+					bDetermineTheBuildingLocation = false;
 				}
 			}
 			BuildSysChange();
 		}
 	}
 }
+
+void UACBuildSystem::RotateThing()
+{
+	if (IsEnableThisSystem() == false) return;
+	FBuildableInfo thing_info;
+	FBuildableInfo* infoptr = nullptr;
+	if (GetCurrentItemInfo(thing_info, &infoptr) && GhostBuilding)
+	{
+		bDetermineTheBuildingLocation = true;
+		BuildingSpotting = this->HitLoc;
+	}
+	
+}
+
+void UACBuildSystem::CancelBuildingSpotting()
+{
+	if (bDetermineTheBuildingLocation)
+	{
+		bDetermineTheBuildingLocation = false;
+		bDefiniteConstruction = false;
+	}
+}
+
 bool UACBuildSystem::GetCurrentItemInfo(FBuildableInfo& thing_info, FBuildableInfo** infoptr) {
 	if (build_thing_infos.Num() > 0) {
 		verifyf(current_item_idx >= 0 && current_item_idx < build_thing_infos.Num(), TEXT("invalid i"));
@@ -327,6 +363,13 @@ FRotator UACBuildSystem::GetGhostRotator()
 	auto frot = UKismetMathLibrary::MakeRotFromXZ(xv, HitNormal);
 
 	auto SpawnRot = frot;
+	if (bDetermineTheBuildingLocation)
+	{
+		FVector GhostBuildLocation = BuildingSpotting;
+		FVector TempLocation = FVector(this->HitLoc.X,this->HitLoc.Y,GhostBuildLocation.Z);
+		//TotalRot = UKismetMathLibrary::FindLookAtRotation(GhostBuildLocation,TempLocation).Yaw;
+		SpawnRot = UKismetMathLibrary::FindLookAtRotation(GhostBuildLocation,TempLocation);
+	}
 	return SpawnRot;
 }
 

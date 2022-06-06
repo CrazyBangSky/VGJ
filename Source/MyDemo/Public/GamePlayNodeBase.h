@@ -60,8 +60,8 @@ public:
 	bool bHasBeenBuilt;
 
 	UFUNCTION(BlueprintNativeEvent)
-	void ActiveNode();
-	virtual  void ActiveNode_Implementation();
+	void ActiveNode(AActor* _Executant, FName _NodeTag);
+	virtual  void ActiveNode_Implementation(AActor* _Executant, FName _NodeTag);
 	
 	UFUNCTION(BlueprintPure)
 	AGamePlayNodeBase* GetNextNode() const { return  NextNode.Get();};

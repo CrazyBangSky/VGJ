@@ -66,9 +66,11 @@ void UGamePlayNodesCheckComp::TickComponent(float DeltaTime, ELevelTick TickType
 			FirstNode = Cast<AGamePlayNodeBase>(HitResult.Actor.Get());
 			TraceCheck(FirstNode->OutLocation,FirstNode->OutDirectiron,FirstNode);
 		}
+		UpdateAllNodesOutDirection(FirstNode);
 	}
 	// ...
 }
+
 
 bool UGamePlayNodesCheckComp::TraceCheck(FVector Start, FVector Direction,AGamePlayNodeBase* TraceNode)
 {
@@ -85,7 +87,7 @@ bool UGamePlayNodesCheckComp::TraceCheck(FVector Start, FVector Direction,AGameP
 	AGamePlayNodeBase* Node = Cast<AGamePlayNodeBase>(HitResult.Actor.Get());
 	if(CheckNodesCounterMap.Find(Node))
 	{
-		if(*(CheckNodesCounterMap.Find(Node)) == 2)
+		if(*(CheckNodesCounterMap.Find(Node)) == MaxCheckCount)
 		{
 			return  false;
 		}
@@ -106,5 +108,24 @@ bool UGamePlayNodesCheckComp::TraceCheck(FVector Start, FVector Direction,AGameP
 	Direction = Node->OutDirectiron;
 	TraceNode = Node;
 	return TraceCheck(Start,Direction,TraceNode);
+}
+
+void UGamePlayNodesCheckComp::UpdateAllNodesOutDirection(AGamePlayNodeBase* Node)
+{
+	if (Node)
+	{
+		if (Node->NextNode.IsValid())
+		{
+			Node->NextNode.Get()->OutDirectiron = UKismetMathLibrary::GetForwardVector(Node->GetActorRotation());
+		}
+		if (Node->NodeTag == FName(TEXT("Rotate")))
+		{
+			Node->OutDirectiron = UKismetMathLibrary::GetForwardVector(Node->GetActorRotation());
+		}
+		if (Node->NextNode.IsValid())
+		{
+			return UpdateAllNodesOutDirection(Node->NextNode.Get());
+		}
+	}
 }
 

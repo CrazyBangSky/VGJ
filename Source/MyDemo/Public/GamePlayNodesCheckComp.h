@@ -34,6 +34,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 	class AGamePlayNodeBase* FirstNode = nullptr;
+
+	UPROPERTY(BlueprintReadWrite)
+	int32 MaxCheckCount = 10;
 	
 private:
 	AActor* MyOwner;
@@ -43,4 +46,6 @@ private:
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypoeQueryList;
 	
 	bool TraceCheck(FVector Start,FVector Direction, class AGamePlayNodeBase* TraceNode);
+	
+	void UpdateAllNodesOutDirection(class AGamePlayNodeBase* Node);
 };

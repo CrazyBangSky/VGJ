@@ -57,7 +57,9 @@ void IMyBuildSystemBuilder::BindMyBuildSystemAction(UInputComponent* MyInputComp
         MyInputComponent->BindAction<FBuildSystemBoolDelegate>("MyDisableBuildSystem", IE_Pressed, mybs, &UACBuildSystem::EnableThisSystem, false);
         MyInputComponent->BindAction<FBuildSystemBoolDelegate>("HeingBuildSystemIncreaseCurrentItem", IE_Pressed, mybs, &UACBuildSystem::StepIncCurrentItemIdx, true);
         MyInputComponent->BindAction<FBuildSystemBoolDelegate>("HeingBuildSystemDecreaseCurrentItem", IE_Pressed, mybs, &UACBuildSystem::StepIncCurrentItemIdx, false);
-        MyInputComponent->BindAction("HeingBuildSystemPlaceThing", IE_Pressed, mybs, &UACBuildSystem::BuildThing);
+        MyInputComponent->BindAction("HeingBuildSystemPlaceThing",IE_Pressed,mybs,&UACBuildSystem::RotateThing);
+        MyInputComponent->BindAction("HeingBuildSystemPlaceThing", IE_Released, mybs, &UACBuildSystem::BuildThing);
+        MyInputComponent->BindAction("HeingCancelBuildSystemPlaceThing", IE_Pressed, mybs, &UACBuildSystem::CancelBuildingSpotting);
         MyInputComponent->BindAction<FBuildSystemBoolDelegate>("HeingBuildSystemRotClockwise", IE_Pressed, mybs, &UACBuildSystem::InputClockwiseRotateThing,true);
         MyInputComponent->BindAction<FBuildSystemBoolDelegate>("HeingBuildSystemRotClockwise", IE_Released, mybs, &UACBuildSystem::InputClockwiseRotateThing,false);
         MyInputComponent->BindAction<FBuildSystemBoolDelegate>("HeingBuildSystemRotCounterClockwise", IE_Pressed, mybs, &UACBuildSystem::InputCounterclockwiseRotateThing,true);

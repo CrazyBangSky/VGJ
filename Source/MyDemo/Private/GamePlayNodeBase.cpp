@@ -38,7 +38,7 @@ void AGamePlayNodeBase::Tick(float DeltaTime)
 
 }
 
-void AGamePlayNodeBase::ActiveNode_Implementation()
+void AGamePlayNodeBase::ActiveNode_Implementation(AActor* _Executant, FName _NodeTag)
 {
 }
 
@@ -60,8 +60,8 @@ void AGamePlayNodeBase::OnNodeExecution(AActor* _Executant, FName _NodeTag)
 	if(_Executant)
 	{
 		const FVector DefaultUpVector = FVector(0.f,0.f,1.f);
-		ActiveNode();
-		_Executant->SetActorRotation(UKismetMathLibrary::MakeRotFromXZ(OutDirectiron,DefaultUpVector));
+		ActiveNode(_Executant,NodeTag);
+		//_Executant->SetActorRotation(UKismetMathLibrary::MakeRotFromXZ(OutDirectiron,DefaultUpVector));
 	}
 }
 

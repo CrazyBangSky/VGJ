@@ -91,6 +91,12 @@ public:
 		void BuildThing();
 
 	UFUNCTION(BlueprintCallable)
+		void RotateThing();
+
+	UFUNCTION(BlueprintCallable)
+		void CancelBuildingSpotting();
+
+	UFUNCTION(BlueprintCallable)
 		void EnableThisSystem(bool x);
 
 	UFUNCTION(BlueprintCallable)
@@ -144,4 +150,8 @@ private:
 
 	bool bClockwiseRotate = false;
 	bool bCounterclockwiseRotate = false;
+
+	bool bDefiniteConstruction = true;
+	bool bDetermineTheBuildingLocation = false;
+	FVector BuildingSpotting = FVector::ZeroVector;
 };
