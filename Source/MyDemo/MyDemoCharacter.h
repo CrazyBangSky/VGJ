@@ -48,26 +48,32 @@ public:
 	FRotator InitRotator;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float MoveSpeed;
+	float SprintSpeed;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float RotateSpeed;
 
-	UPROPERTY(BlueprintReadWrite)
-	class AGamePlayNodeBase* CurrentNode;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DefaultSprintDistance = 5000.f;
 
 	UPROPERTY(BlueprintReadWrite)
 	class AGamePlayNodeBase* TargetNode;
 
 	UPROPERTY(BlueprintReadWrite)
-	bool bCanMoving;
+	bool bCanSprint;
+
+	UPROPERTY(BlueprintReadWrite)
+	FVector TargetLocation;
 	
 	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaSeconds) override;
 
-	UFUNCTION(BlueprintCallable)
-	void InitFirstNode();
+	UFUNCTION()
+	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 protected:
 

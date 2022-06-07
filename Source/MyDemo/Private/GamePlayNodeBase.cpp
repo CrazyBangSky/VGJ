@@ -5,6 +5,7 @@
 
 #include "Components/SphereComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "MyDemo/MyDemoCharacter.h"
 
 // Sets default values
 AGamePlayNodeBase::AGamePlayNodeBase()
@@ -60,7 +61,13 @@ void AGamePlayNodeBase::OnNodeExecution(AActor* _Executant, FName _NodeTag)
 	if(_Executant)
 	{
 		const FVector DefaultUpVector = FVector(0.f,0.f,1.f);
+		AMyDemoCharacter* MyPlayer = Cast<AMyDemoCharacter>(_Executant);
+		if(MyPlayer)
+		{
+			MyPlayer->TargetLocation = MyPlayer->GetActorLocation() + OutDirectiron * MyPlayer->DefaultSprintDistance;
+		}
 		ActiveNode(_Executant,NodeTag);
+		
 		//_Executant->SetActorRotation(UKismetMathLibrary::MakeRotFromXZ(OutDirectiron,DefaultUpVector));
 	}
 }

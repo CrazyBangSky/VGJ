@@ -51,9 +51,9 @@ AMyDemoCharacter::AMyDemoCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	GameplayNodeCheckComp = CreateDefaultSubobject<UGamePlayNodesCheckComp>(TEXT("GameplayNodeCheckComp"));
-	GameplayNodeCheckComp->TraceRadius = 50.f;
-	GameplayNodeCheckComp->TraceDistance = 2000.f;
+	// GameplayNodeCheckComp = CreateDefaultSubobject<UGamePlayNodesCheckComp>(TEXT("GameplayNodeCheckComp"));
+	// GameplayNodeCheckComp->TraceRadius = 50.f;
+	// GameplayNodeCheckComp->TraceDistance = 2000.f;
 
 	InitRotator = GetActorRotation();
 
@@ -117,6 +117,8 @@ void AMyDemoCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this,&AMyDemoCharacter::OnBeginOverlap);
+	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this,&AMyDemoCharacter::OnEndOverlap);
 	//Spawn origin indicator line 
 	FActorSpawnParameters ASP;
 	ASP.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -128,34 +130,54 @@ void AMyDemoCharacter::BeginPlay()
 		OriginIndicatorLine->EndPoint =	OriginIndicatorLine->StartPoint + UKismetMathLibrary::GetForwardVector(GetActorRotation()) * OriginIndicatorLine->DefaultLength;
 		OriginIndicatorLine->StartObject = MakeWeakObjectPtr(this);
 	}
-	//初始化第一个节点
-	if (GameplayNodeCheckComp->FirstNode)
-	{
-		TargetNode = GameplayNodeCheckComp->FirstNode;
-	}
+	
+	TargetLocation = GetActorLocation() + UKismetMathLibrary::GetForwardVector(GetActorRotation()) * DefaultSprintDistance;
 }
 
 void AMyDemoCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	if(bCanMoving && TargetNode)
+	if(bCanSprint)
 	{
-		FVector InterpLocation  = 	UKismetMathLibrary::VInterpTo_Constant(GetActorLocation(),TargetNode->OutLocation,DeltaSeconds,MoveSpeed);
+		FVector InterpLocation  = 	UKismetMathLibrary::VInterpTo_Constant(GetActorLocation(),TargetLocation,DeltaSeconds,SprintSpeed);
 		SetActorLocation(InterpLocation);
-		if(GetActorLocation().Equals(TargetNode->OutLocation,5.0f))
+		if(GetActorLocation().Equals(TargetLocation,5.0f))
 		{
-			CurrentNode = TargetNode;
-			CurrentNode->NodeExecutionDelegate.Broadcast(this,CurrentNode->NodeTag);
-			TargetNode = CurrentNode->GetNextNode();
+			if(TargetNode)
+			{
+				TargetNode->NodeExecutionDelegate.Broadcast(this,TargetNode->NodeTag);
+				TargetNode = nullptr;
+			}
 		}
 	}
 }
 
-void AMyDemoCharacter::InitFirstNode()
+void AMyDemoCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (GameplayNodeCheckComp->FirstNode)
+	if(OtherActor)
 	{
-		TargetNode = GameplayNodeCheckComp->FirstNode;
+		AGamePlayNodeBase* OverlapNode = Cast<AGamePlayNodeBase>(OtherActor);
+		if(OverlapNode && !OverlapNode->bIsExecuting)
+		{
+			TargetNode = OverlapNode;
+			TargetNode->bIsExecuting = true;
+			FVector Temp = FVector(TargetNode->GetActorLocation().X,TargetNode->GetActorLocation().Y,GetActorLocation().Z);
+			TargetLocation = Temp;
+		}
+	}
+}
+
+void AMyDemoCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if(OtherActor)
+	{
+		AGamePlayNodeBase* OverlapNode = Cast<AGamePlayNodeBase>(OtherActor);
+		if(OverlapNode)
+		{
+			OverlapNode->bIsExecuting = false;
+		}
 	}
 }
 

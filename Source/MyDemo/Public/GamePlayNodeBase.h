@@ -59,6 +59,9 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	bool bHasBeenBuilt;
 
+	UPROPERTY(BlueprintReadWrite)
+	bool bIsExecuting = false;
+
 	UFUNCTION(BlueprintNativeEvent)
 	void ActiveNode(AActor* _Executant, FName _NodeTag);
 	virtual  void ActiveNode_Implementation(AActor* _Executant, FName _NodeTag);

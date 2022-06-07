@@ -8,6 +8,7 @@
 
 #include "Kismet/KismetMathLibrary.h"
 #include "IMyBuildSystemBuilder.h"
+#include "VGJGameMode.h"
 #include "Components/StaticMeshComponent.h"
 #include "MyDemo/Public/GamePlayNodeBase.h"
 #include "Evaluation/Blending/MovieSceneBlendType.h"
@@ -35,6 +36,19 @@ void UACBuildSystem::BeginPlay()
 	FRotator r(0, 90, 0);
 	auto res = r.RotateVector(FVector(1, 0, 0));
 	UE_LOG(LogClass, Log, TEXT("mmm,%s"),*res.ToString());
+
+	//初始化当前关卡可以使用的节点
+	AVGJGameMode* GM = Cast<AVGJGameMode>(UGameplayStatics::GetGameMode(this));
+	if(GM && GM->CUrrentLevelBuildInfos.Num() > 0)
+	{
+		for(auto it : GM->CUrrentLevelBuildInfos)
+		{
+			build_thing_infos.Add(it);
+		}
+	}
+
+	//启动建造系统
+	EnableThisSystem(true);
 	//SMCGhost->GetStaticMesh()->SetMaterial(0, GhostMaterial);
 	// ... 
 }
@@ -132,15 +146,40 @@ void UACBuildSystem::BuildThing() {
 
 void UACBuildSystem::RotateThing()
 {
-	if (IsEnableThisSystem() == false) return;
-	FBuildableInfo thing_info;
-	FBuildableInfo* infoptr = nullptr;
-	if (GetCurrentItemInfo(thing_info, &infoptr) && GhostBuilding)
+	if (IsEnableThisSystem() == false)
 	{
-		bDetermineTheBuildingLocation = true;
-		BuildingSpotting = this->HitLoc;
+		bDetermineTheBuildingLocation = false;
+		FVector Start = FVector::ZeroVector;
+		FVector Direction = FVector::ZeroVector;
+		FVector End = FVector::ZeroVector;
+
+		mybuilder->GetLineTraceOriginAndDirecrion(Start,Direction);
+		End = Start + Direction * linetrace_distance;
+		FHitResult HitRe;
+		TArray<AActor*>IgnoreList = {};
+		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypeQueryList = {};
+		ObjectTypeQueryList.Add(UEngineTypes::ConvertToObjectType(TRACE_GAME_PLAY_NODE));
+		UKismetSystemLibrary::LineTraceSingleForObjects(GetWorld(), Start, End, ObjectTypeQueryList,true,IgnoreList,EDrawDebugTrace::None,HitRe,true);
+		if(HitRe.bBlockingHit && Cast<AGamePlayNodeBase>(HitRe.Actor.Get()))
+		{
+			AGamePlayNodeBase* SelectNode = Cast<AGamePlayNodeBase>(HitRe.Actor.Get());
+			FBuildableInfo SelectNodeInfo;
+			SelectNodeInfo.actor_class = SelectNode->GetClass();
+			SelectNodeInfo.count = 1;
+			AddBuildableInfo(SelectNodeInfo);
+			SelectNode->Destroy();
+		}
 	}
-	
+	else
+	{
+		FBuildableInfo thing_info;
+		FBuildableInfo* infoptr = nullptr;
+		if (GetCurrentItemInfo(thing_info, &infoptr) && GhostBuilding)
+		{
+			bDetermineTheBuildingLocation = true;
+			BuildingSpotting = this->HitLoc;
+		}
+	}
 }
 
 void UACBuildSystem::CancelBuildingSpotting()

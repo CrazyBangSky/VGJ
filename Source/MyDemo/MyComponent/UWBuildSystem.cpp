@@ -10,10 +10,6 @@
 void UUWBuildSystem::UpdateBuildableInfo()
 { 
 	if (GetBuildSystemComp()) {
-		if (GetBuildSystemComp()->IsEnableThisSystem() == false) {
-			return;
-		}
-
 		auto infos = GetBuildSystemComp()->GetBuildableInfo();
 		items.Empty();
 		LVBuildable->ClearListItems();
